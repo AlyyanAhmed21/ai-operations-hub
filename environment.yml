@@ -1,0 +1,17 @@
+name: LearnAgents
+dependencies:
+  - python=3.12
+  - pip
+  - pip:
+    - fastapi
+    - uvicorn
+    - langchain
+    - langchain-core
+    - langgraph
+    - langchain-groq
+    - langchain-huggingface
+    - langchain-chroma
+    - sentence-transformers
+    - chromadb
+    - python-dotenv
+    - pydantic
