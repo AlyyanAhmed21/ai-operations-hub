@@ -1,29 +1,32 @@
+# backend/main.py
 from fastapi import FastAPI
-from pydantic import BaseModel
+from fastapi.middleware.cors import CORSMiddleware
+from dotenv import load_dotenv
+from api.routes import router
+from utils.logger import logger
 
-# Initialize the FastAPI app
-app = FastAPI(title="AI Operations Hub", version="1.0")
+# LOAD ENVIRONMENT VARIABLES (This activates LangSmith and Groq!)
+load_dotenv()
 
-# Define the data structure we expect for the webhook
-class WebhookPayload(BaseModel):
-    source: str
-    message: str
-    customer_id: str | None = None  # Optional field
+logger.info("Starting AI Operations Hub API...")
 
-@app.get("/health")
-async def health_check():
-    """Simple endpoint to check if the server is alive."""
-    return {"status": "healthy", "system": "AI Operations Hub v1"}
+app = FastAPI(
+    title="AI Operations Hub API",
+    description="Backend for the Agentic AI Operations System",
+    version="1.0.0"
+)
 
-@app.post("/webhook")
-async def receive_webhook(payload: WebhookPayload):
-    """Endpoint to receive data from n8n or external services."""
-    print(f"🔔 Webhook received from {payload.source}: {payload.message}")
-    
-    # Later, this is where we will trigger our LangGraph AI agents!
-    
-    return {
-        "status": "success", 
-        "received_message": payload.message,
-        "action": "logged"
-    }
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"], 
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+app.include_router(router, prefix="/api/v1")
+
+if __name__ == "__main__":
+    import uvicorn
+    logger.info("Initializing Uvicorn server...")
+    uvicorn.run("main:app", host="0.0.0.0", port=8000, reload=True)
