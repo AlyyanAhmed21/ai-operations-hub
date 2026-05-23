@@ -5,6 +5,8 @@ from fastapi import APIRouter, UploadFile, File, HTTPException
 from models.schemas import QueryRequest, QueryResponse, WebhookPayload
 from rag.ingestion import process_uploaded_file
 from rag.retriever import ask_knowledge_base
+from agents.workflow import agent_app
+from utils.logger import logger
 
 router = APIRouter()
 
@@ -52,18 +54,35 @@ async def upload_document(file: UploadFile = File(...)):
 
 @router.post("/query", response_model=QueryResponse, tags=["AI Operations"])
 async def process_query(request: QueryRequest):
-    """Send a query to the AI Operations Hub."""
-    
+    """Send a query to the AI Operations Hub Multi-Agent System."""
     try:
-        # Call our RAG system
-        rag_result = ask_knowledge_base(request.query)
+        logger.info(f"🚀 Incoming Query: '{request.query}'")
         
+        # 1. Prepare the initial state for LangGraph
+        initial_state = {
+            "query": request.query,
+            "session_id": request.session_id,
+            "route": "",
+            "answer": "",
+            "sources": [],
+            "requires_approval": False,
+            "extracted_data": {}
+        }
+        
+        # 2. Run the Multi-Agent Workflow!
+        final_state = agent_app.invoke(initial_state)
+        
+        # 3. Return the final result
         return QueryResponse(
-            answer=rag_result["answer"],
-            sources=rag_result["sources"],
-            route_taken="rag_direct" # We will update this in Phase 3 with LangGraph
+            answer=final_state.get("answer", ""),
+            sources=final_state.get("sources", []),
+            route_taken=final_state.get("route", "unknown"),
+            requires_approval=final_state.get("requires_approval", False),
+            extracted_data=final_state.get("extracted_data", {})
         )
+        
     except Exception as e:
+        logger.error(f"Error processing query: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error processing query: {str(e)}")
 
 @router.post("/webhook", tags=["Automations"])
