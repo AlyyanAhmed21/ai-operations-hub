@@ -1,0 +1,2133 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Operations Hub</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@100;400;700;800&family=Outfit:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700;800&display=swap"
+    rel="stylesheet" />
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg: #0f1115;
+      --bg-1: #1a1d24;
+      --bg-2: #252933;
+      --border: #262626;
+      --indigo: #4f46e5;
+      --indigo-glow: rgba(79, 70, 229, 0.25);
+      --acid: #ccff00;
+      --acid-glow: rgba(204, 255, 0, 0.25);
+      --text: #f8fafc;
+      --muted: #94a3b8;
+      --danger: #ff4500;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'JetBrains Mono', monospace;
+      min-height: 100vh;
+      display: flex;
+      overflow: hidden;
+    }
+
+    /* ─── Scrollbar ─── */
+    ::-webkit-scrollbar {
+      width: 5px;
+      height: 5px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--bg-2);
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--muted);
+    }
+
+    /* ─── SIDEBAR ─── */
+    #sidebar {
+      width: 240px;
+      min-width: 240px;
+      background: var(--bg);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 50;
+    }
+
+    #sidebar-logo {
+      height: 64px;
+      display: flex;
+      align-items: center;
+      padding: 0 24px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(26, 29, 36, 0.6);
+      backdrop-filter: blur(12px);
+    }
+
+    #sidebar-logo h1 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: white;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      letter-spacing: -0.02em;
+    }
+
+    #sidebar-logo h1 .dot {
+      color: var(--indigo);
+    }
+
+    #sidebar-logo svg {
+      color: var(--indigo);
+      flex-shrink: 0;
+    }
+
+    #sidebar nav {
+      flex: 1;
+      padding: 16px;
+      margin-top: 8px;
+      overflow-y: auto;
+    }
+
+    .nav-label {
+      font-size: 9px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.15em;
+      font-weight: 700;
+      padding-left: 12px;
+      margin-bottom: 12px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 12px;
+      border-radius: 4px;
+      border: 1px solid transparent;
+      font-size: 12px;
+      color: var(--muted);
+      text-decoration: none;
+      cursor: pointer;
+      transition: all 0.18s ease;
+      position: relative;
+      margin-bottom: 4px;
+    }
+
+    .nav-item:hover {
+      background: var(--bg-1);
+      color: white;
+      border-color: var(--border);
+      transform: translateX(4px);
+    }
+
+    .nav-item.active {
+      background: var(--bg-1);
+      color: white;
+      border-color: var(--border);
+    }
+
+    .nav-item.active svg {
+      color: var(--indigo);
+    }
+
+    .nav-item .nav-indicator {
+      position: absolute;
+      left: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 3px;
+      height: 18px;
+      background: var(--indigo);
+      border-radius: 0 4px 4px 0;
+      box-shadow: 0 0 8px var(--indigo-glow);
+      display: none;
+    }
+
+    .nav-item.active .nav-indicator {
+      display: block;
+    }
+
+    .nav-item svg {
+      width: 16px;
+      height: 16px;
+      color: var(--muted);
+      flex-shrink: 0;
+      transition: color 0.18s;
+    }
+
+    .nav-item:hover svg,
+    .nav-item.active svg {
+      color: var(--indigo);
+    }
+
+    #sidebar-footer {
+      padding: 16px;
+      border-top: 1px solid var(--border);
+      background: rgba(26, 29, 36, 0.6);
+      backdrop-filter: blur(12px);
+    }
+
+    .system-status {
+      background: var(--bg-1);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 10px 12px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--acid);
+      box-shadow: 0 0 8px var(--acid-glow);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: 1
+      }
+
+      50% {
+        opacity: 0.4
+      }
+    }
+
+    .status-label {
+      font-size: 11px;
+      color: white;
+      font-weight: 700;
+    }
+
+    .status-sub {
+      font-size: 9px;
+      color: var(--muted);
+    }
+
+    /* ─── MAIN ─── */
+    #main {
+      margin-left: 240px;
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+      overflow: hidden;
+    }
+
+    /* ─── VIEWS ─── */
+    .view {
+      display: none;
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    .view.active {
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ─── ANIMATIONS ─── */
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(12px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .fade-up {
+      animation: fadeUp 0.4s ease-out forwards;
+    }
+
+    .fade-up-d1 {
+      animation: fadeUp 0.4s 0.1s ease-out both;
+    }
+
+    .fade-up-d2 {
+      animation: fadeUp 0.4s 0.2s ease-out both;
+    }
+
+    .fade-up-d3 {
+      animation: fadeUp 0.4s 0.3s ease-out both;
+    }
+
+    .fade-up-d4 {
+      animation: fadeUp 0.4s 0.4s ease-out both;
+    }
+
+    /* ─── PAGE HEADER ─── */
+    .page-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 32px;
+    }
+
+    .page-header h1 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 2.2rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, #ffffff 60%, #a5b4fc 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      display: inline-block;
+    }
+
+    .page-header p {
+      color: var(--muted);
+      font-size: 13px;
+      margin-top: 4px;
+    }
+
+    /* ─── STATUS BADGE ─── */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 10px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      border: 1px solid;
+    }
+
+    .badge-acid {
+      color: var(--acid);
+      background: rgba(204, 255, 0, 0.08);
+      border-color: rgba(204, 255, 0, 0.3);
+      box-shadow: 0 0 10px var(--acid-glow);
+    }
+
+    .badge-indigo {
+      color: #a5b4fc;
+      background: rgba(79, 70, 229, 0.12);
+      border-color: rgba(79, 70, 229, 0.3);
+    }
+
+    .badge-danger {
+      color: var(--danger);
+      background: rgba(255, 69, 0, 0.1);
+      border-color: rgba(255, 69, 0, 0.3);
+    }
+
+    .badge-muted {
+      color: var(--muted);
+      background: var(--bg-1);
+      border-color: var(--border);
+    }
+
+    /* ─── BENTO CARDS ─── */
+    .card {
+      background: var(--bg-1);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      transition: border-color 0.22s ease, box-shadow 0.22s ease, transform 0.22s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card:hover {
+      border-color: var(--indigo);
+      box-shadow: 0 8px 32px rgba(79, 70, 229, 0.2);
+      transform: translateY(-3px);
+    }
+
+    /* Custom neon highlights for a premium energetic style */
+    .card.border-indigo { border-top: 3px solid var(--indigo); }
+    .card.border-acid { border-top: 3px solid var(--acid); }
+    .card.border-danger { border-top: 3px solid var(--danger); }
+
+    /* ─── DASHBOARD GRID ─── */
+    #view-dashboard {
+      padding: 32px;
+    }
+
+    .dashboard-content {
+      max-width: 1100px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    .bento-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+
+    .bento-main {
+      grid-column: span 2;
+      padding: 28px;
+      position: relative;
+      overflow: hidden;
+      min-height: 170px;
+      background-image: linear-gradient(rgba(79, 70, 229, 0.04) 1px, transparent 1px),
+                        linear-gradient(90deg, rgba(79, 70, 229, 0.04) 1px, transparent 1px);
+      background-size: 24px 24px;
+      background-color: var(--bg-1);
+    }
+
+    .bento-main .glow-orb {
+      position: absolute;
+      right: -60px;
+      top: -60px;
+      width: 220px;
+      height: 220px;
+      background: var(--indigo);
+      opacity: 0.12;
+      border-radius: 50%;
+      filter: blur(60px);
+    }
+
+    .bento-small {
+      padding: 22px;
+      min-height: 80px;
+    }
+
+    .stat-label {
+      font-size: 10px;
+      color: var(--muted);
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      margin-bottom: 6px;
+    }
+
+    .stat-value {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 3.5rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, #ffffff 40%, #818cf8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      display: inline-block;
+      text-shadow: 0 0 30px rgba(79, 70, 229, 0.15);
+    }
+
+    .stat-value-sm {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: white;
+      letter-spacing: -0.01em;
+    }
+
+    .stat-value-sm.acid {
+      background: linear-gradient(135deg, #ffffff 40%, #ccff00 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      display: inline-block;
+    }
+
+    .bottom-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    /* Queue card */
+    .queue-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(15, 17, 21, 0.7);
+    }
+
+    .queue-header h3 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+      color: white;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .queue-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+
+    .queue-item:hover {
+      background: rgba(15, 17, 21, 0.5);
+    }
+
+    .queue-item:last-child {
+      border-bottom: none;
+    }
+
+    .queue-id {
+      font-size: 10px;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+
+    .queue-desc {
+      font-size: 13px;
+      color: var(--text);
+    }
+
+    /* Terminal window */
+    .terminal-bar {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 10px 14px;
+      background: #0a0a0c;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .terminal-dot {
+      width: 11px;
+      height: 11px;
+      border-radius: 50%;
+    }
+
+    .terminal-title {
+      font-size: 10px;
+      color: var(--muted);
+      margin-left: 6px;
+    }
+
+    #terminal-logs {
+      background: #0a0a0c;
+      flex: 1;
+      padding: 14px;
+      font-size: 11px;
+      min-height: 200px;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    .log-line {
+      margin-bottom: 5px;
+      line-height: 1.5;
+    }
+
+    .log-ts {
+      color: var(--muted);
+      opacity: 0.5;
+      margin-right: 8px;
+    }
+
+    .log-router {
+      color: #a5b4fc;
+    }
+
+    .log-system {
+      color: var(--acid);
+    }
+
+    .log-support {
+      color: var(--text);
+    }
+
+    .log-escalate {
+      color: #f87171;
+    }
+
+    .terminal-cursor {
+      display: inline-block;
+      width: 7px;
+      height: 13px;
+      background: var(--muted);
+      opacity: 0.5;
+      animation: blink 1s step-end infinite;
+      vertical-align: middle;
+    }
+
+    @keyframes blink {
+      50% {
+        opacity: 0;
+      }
+    }
+
+    /* ─── CHAT VIEW ─── */
+    #view-chat {
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    #chat-header {
+      height: 64px;
+      min-height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 32px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(26, 29, 36, 0.6);
+      backdrop-filter: blur(12px);
+    }
+
+    #chat-header h2 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: white;
+      letter-spacing: -0.01em;
+    }
+
+    #chat-session-label {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 1px;
+    }
+
+    #chat-history {
+      flex: 1;
+      overflow-y: auto;
+      padding: 32px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    #chat-welcome {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      flex: 1;
+      text-align: center;
+      gap: 14px;
+      padding: 60px 20px;
+    }
+
+    #chat-welcome .bot-icon {
+      width: 64px;
+      height: 64px;
+      background: var(--bg-1);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 20px var(--indigo-glow);
+    }
+
+    #chat-welcome h3 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1.5rem;
+      color: white;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+
+    #chat-welcome p {
+      font-size: 13px;
+      color: var(--muted);
+      max-width: 400px;
+      line-height: 1.7;
+    }
+
+    .msg-row {
+      display: flex;
+      width: 100%;
+    }
+
+    .msg-row.user {
+      justify-content: flex-end;
+    }
+
+    .msg-row.ai {
+      justify-content: flex-start;
+    }
+
+    .msg-bubble {
+      max-width: 75%;
+      border: 1px solid;
+      border-radius: 6px;
+      padding: 16px 18px;
+      font-size: 13px;
+      line-height: 1.65;
+    }
+
+    .msg-bubble.user {
+      background: var(--indigo);
+      border-color: transparent;
+      color: white;
+      border-top-right-radius: 2px;
+      box-shadow: 0 0 16px var(--indigo-glow);
+    }
+
+    .msg-bubble.ai {
+      background: var(--bg-1);
+      border-color: var(--border);
+      color: var(--text);
+      border-top-left-radius: 2px;
+      display: flex;
+      gap: 14px;
+    }
+
+    .ai-icon {
+      width: 32px;
+      height: 32px;
+      min-width: 32px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 2px;
+    }
+
+    .msg-meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 10px;
+    }
+
+    .sources-section {
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid var(--border);
+    }
+
+    .sources-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--muted);
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .source-item {
+      font-size: 11px;
+      color: var(--muted);
+      display: flex;
+      gap: 6px;
+      margin-bottom: 4px;
+    }
+
+    .source-num {
+      color: var(--indigo);
+    }
+
+    #chat-input-area {
+      padding: 20px 32px;
+      background: var(--bg);
+      border-top: 1px solid var(--border);
+      position: relative;
+    }
+
+    .chat-glow {
+      position: absolute;
+      bottom: 24px;
+      left: 10%;
+      right: 10%;
+      height: 40px;
+      background: var(--indigo);
+      filter: blur(40px);
+      opacity: 0.1;
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    .chat-input-row {
+      display: flex;
+      align-items: flex-end;
+      gap: 10px;
+      max-width: 900px;
+      margin: 0 auto;
+      position: relative;
+      z-index: 1;
+    }
+
+    #chat-textarea {
+      flex: 1;
+      background: var(--bg-1);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 14px 16px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      color: white;
+      resize: none;
+      min-height: 54px;
+      max-height: 200px;
+      outline: none;
+      transition: border-color 0.2s;
+      line-height: 1.5;
+    }
+
+    #chat-textarea::placeholder {
+      color: var(--muted);
+    }
+
+    #chat-textarea:focus {
+      border-color: var(--indigo);
+      box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.15);
+    }
+
+    #chat-textarea:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    #chat-send-btn {
+      height: 54px;
+      padding: 0 22px;
+      background: var(--indigo);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: opacity 0.15s, transform 0.1s;
+      white-space: nowrap;
+    }
+
+    #chat-send-btn:hover:not(:disabled) {
+      opacity: 0.88;
+      transform: translateY(-1px);
+    }
+
+    #chat-send-btn:active:not(:disabled) {
+      transform: translateY(0);
+    }
+
+    #chat-send-btn:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* ─── KNOWLEDGE VIEW ─── */
+    #view-knowledge {
+      padding: 32px;
+    }
+
+    #view-knowledge .inner {
+      max-width: 900px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    #drop-zone {
+      border: 2px dashed var(--border);
+      border-radius: 6px;
+      background: var(--bg-1);
+      padding: 56px 32px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    #drop-zone:hover {
+      border-color: var(--muted);
+    }
+
+    #drop-zone.dragover {
+      border-color: var(--indigo);
+      background: rgba(79, 70, 229, 0.06);
+    }
+
+    .upload-icon {
+      width: 64px;
+      height: 64px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 18px var(--indigo-glow);
+      margin-bottom: 20px;
+    }
+
+    #drop-zone h3 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1.3rem;
+      font-weight: 700;
+      color: white;
+      margin-bottom: 8px;
+      letter-spacing: -0.01em;
+    }
+
+    #drop-zone p {
+      font-size: 12px;
+      color: var(--muted);
+      max-width: 360px;
+      line-height: 1.7;
+      margin-bottom: 20px;
+    }
+
+    .browse-btn {
+      padding: 10px 22px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--muted);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      cursor: pointer;
+      transition: border-color 0.2s, color 0.2s;
+    }
+
+    .browse-btn:hover {
+      border-color: var(--indigo);
+      color: white;
+    }
+
+    .toast {
+      position: absolute;
+      top: 14px;
+      right: 14px;
+      display: none;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      border: 1px solid;
+      animation: fadeUp 0.3s ease-out;
+      z-index: 10;
+    }
+
+    .toast.success {
+      background: rgba(204, 255, 0, 0.08);
+      border-color: rgba(204, 255, 0, 0.4);
+      color: var(--acid);
+    }
+
+    .toast.error {
+      background: rgba(255, 69, 0, 0.08);
+      border-color: rgba(255, 69, 0, 0.4);
+      color: var(--danger);
+    }
+
+    .section-divider {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border);
+      margin: 28px 0 16px;
+    }
+
+    .section-divider h3 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 15px;
+      font-weight: 700;
+      color: white;
+      letter-spacing: -0.01em;
+    }
+
+    .search-wrap {
+      position: relative;
+    }
+
+    .search-wrap svg {
+      position: absolute;
+      left: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--muted);
+      pointer-events: none;
+    }
+
+    .search-input {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 7px 14px 7px 32px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px;
+      color: white;
+      width: 220px;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .search-input::placeholder {
+      color: var(--muted);
+    }
+
+    .search-input:focus {
+      border-color: var(--indigo);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    thead tr {
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+    }
+
+    th {
+      padding: 10px 18px;
+      font-size: 10px;
+      color: var(--muted);
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      text-align: left;
+    }
+
+    tbody tr {
+      border-bottom: 1px solid var(--border);
+      transition: background 0.15s;
+    }
+
+    tbody tr:last-child {
+      border-bottom: none;
+    }
+
+    tbody tr:hover {
+      background: rgba(15, 17, 21, 0.6);
+    }
+
+    td {
+      padding: 12px 18px;
+      font-size: 12px;
+      color: var(--text);
+    }
+
+    td.id-cell {
+      color: var(--indigo);
+      font-size: 10px;
+    }
+
+    td.file-cell {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text);
+    }
+
+    td.muted-cell {
+      color: var(--muted);
+    }
+
+    .type-pill {
+      font-size: 9px;
+      font-weight: 700;
+      padding: 2px 6px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 3px;
+      color: var(--muted);
+    }
+
+    .action-btn {
+      opacity: 0;
+      color: var(--muted);
+      background: none;
+      border: none;
+      cursor: pointer;
+      transition: opacity 0.15s, color 0.15s;
+    }
+
+    tbody tr:hover .action-btn {
+      opacity: 1;
+    }
+
+    .action-btn:hover {
+      color: white;
+    }
+
+    /* ─── ADMIN VIEW ─── */
+    #view-admin {
+      padding: 32px;
+    }
+
+    #view-admin .inner {
+      max-width: 1100px;
+      width: 100%;
+      margin: 0 auto;
+    }
+
+    .section-heading {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 20px;
+    }
+
+    .section-heading h2 {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: white;
+      letter-spacing: -0.01em;
+    }
+
+    .agents-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 18px;
+      margin-bottom: 40px;
+    }
+
+    .agent-card {
+      background: var(--bg-1);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 20px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .agent-card:hover {
+      border-color: var(--indigo);
+      box-shadow: 0 4px 24px rgba(79, 70, 229, 0.15);
+    }
+
+    .agent-card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 20px;
+    }
+
+    .agent-card-icon {
+      width: 36px;
+      height: 36px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .agent-name {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: white;
+      margin-bottom: 3px;
+      letter-spacing: -0.01em;
+    }
+
+    .agent-role {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    .agent-footer {
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .agent-footer-label {
+      font-size: 10px;
+      color: var(--muted);
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .agent-footer-value {
+      font-size: 12px;
+      color: var(--text);
+    }
+
+    .wf-list {
+      background: var(--bg-1);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    .wf-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 22px;
+      border-bottom: 1px solid var(--border);
+      transition: background 0.15s;
+    }
+
+    .wf-item:last-child {
+      border-bottom: none;
+    }
+
+    .wf-item:hover {
+      background: rgba(15, 17, 21, 0.5);
+    }
+
+    .wf-left {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .wf-icon {
+      width: 40px;
+      height: 40px;
+      background: var(--bg-2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .wf-name {
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 15px;
+      font-weight: 600;
+      color: white;
+      letter-spacing: -0.01em;
+    }
+
+    .wf-id {
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    /* Toggle */
+    .toggle {
+      position: relative;
+      width: 52px;
+      height: 28px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      cursor: pointer;
+      transition: background 0.25s, border-color 0.25s;
+      flex-shrink: 0;
+    }
+
+    .toggle.on {
+      background: rgba(79, 70, 229, 0.2);
+      border-color: var(--indigo);
+    }
+
+    .toggle-knob {
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 20px;
+      height: 20px;
+      background: var(--muted);
+      border-radius: 50%;
+      transition: transform 0.25s, background 0.25s;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .toggle.on .toggle-knob {
+      transform: translateX(24px);
+      background: var(--indigo);
+      box-shadow: 0 0 8px var(--indigo-glow);
+    }
+
+    /* Spinner */
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .spinner {
+      animation: spin 0.8s linear infinite;
+      display: inline-block;
+    }
+
+    /* SVG icon helper */
+    svg {
+      display: inline-block;
+      vertical-align: middle;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- ════════════════════════════ SIDEBAR ════════════════════════════ -->
+  <aside id="sidebar">
+    <div id="sidebar-logo">
+      <h1>
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+        </svg>
+        AIOps<span class="dot">.</span>Hub
+      </h1>
+    </div>
+
+    <nav>
+      <div class="nav-label">Main Navigation</div>
+
+      <a class="nav-item" data-view="dashboard" href="#dashboard">
+        <div class="nav-indicator"></div>
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="3" y="3" width="7" height="7" />
+          <rect x="14" y="3" width="7" height="7" />
+          <rect x="14" y="14" width="7" height="7" />
+          <rect x="3" y="14" width="7" height="7" />
+        </svg>
+        Dashboard
+      </a>
+
+      <a class="nav-item" data-view="chat" href="#chat">
+        <div class="nav-indicator"></div>
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+        </svg>
+        Terminal
+      </a>
+
+      <a class="nav-item" data-view="knowledge" href="#knowledge">
+        <div class="nav-indicator"></div>
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <ellipse cx="12" cy="5" rx="9" ry="3" />
+          <path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3" />
+          <path d="M3 5v14c0 1.66 4 3 9 3s9-1.34 9-3V5" />
+        </svg>
+        Knowledge Base
+      </a>
+
+      <a class="nav-item" data-view="admin" href="#admin">
+        <div class="nav-indicator"></div>
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+        </svg>
+        Admin Panel
+      </a>
+    </nav>
+
+    <div id="sidebar-footer">
+      <div class="system-status">
+        <div class="status-dot"></div>
+        <div>
+          <div class="status-label">System Online</div>
+          <div class="status-sub">v1.0.0 · vanilla</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ════════════════════════════ MAIN ════════════════════════════ -->
+  <main id="main">
+
+    <!-- ╔══════════════════ DASHBOARD ══════════════════╗ -->
+    <section id="view-dashboard" class="view">
+      <div class="dashboard-content">
+        <div class="page-header fade-up">
+          <div>
+            <h1>System Overview</h1>
+            <p>Real-time metrics and routing status.</p>
+          </div>
+          <div class="badge badge-acid">
+            <span
+              style="width:7px;height:7px;border-radius:50%;background:var(--acid);display:inline-block;animation:pulse 1.5s infinite"></span>
+            Optimal
+          </div>
+        </div>
+
+        <!-- Bento -->
+        <div class="bento-grid fade-up-d1">
+          <!-- Main stat -->
+          <div class="card border-indigo bento-main">
+            <div class="glow-orb"></div>
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;position:relative;z-index:1">
+              <div
+                style="width:44px;height:44px;background:var(--bg);border:1px solid var(--border);border-radius:6px;display:flex;align-items:center;justify-content:center;">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none"
+                  stroke="var(--indigo)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+                </svg>
+              </div>
+              <span class="badge badge-acid">+14.2% /hr</span>
+            </div>
+            <div style="margin-top:36px;position:relative;z-index:1">
+              <div class="stat-label">Total Queries Handled</div>
+              <div class="stat-value">124,592</div>
+            </div>
+          </div>
+
+          <!-- Small stats col -->
+          <div style="display:flex;flex-direction:column;gap:20px;">
+            <div class="card border-indigo bento-small"
+              style="flex:1;display:flex;flex-direction:column;justify-content:space-between;">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                <div class="stat-label">Active Agents</div>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                  stroke="var(--indigo)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="2" y="7" width="20" height="14" rx="2" ry="2" />
+                  <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
+                </svg>
+              </div>
+              <div class="stat-value-sm">4</div>
+            </div>
+            <div class="card border-acid bento-small"
+              style="flex:1;display:flex;flex-direction:column;justify-content:space-between;">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                <div class="stat-label">Avg Response</div>
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                  stroke="var(--acid)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <circle cx="12" cy="12" r="10" />
+                  <polyline points="12 6 12 12 16 14" />
+                </svg>
+              </div>
+              <div class="stat-value-sm acid">420<span style="font-size:14px;color:var(--muted);margin-left:4px;-webkit-text-fill-color:var(--muted);">ms</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bottom row -->
+        <div class="bottom-grid fade-up-d2">
+          <!-- Approval queue -->
+          <div class="card border-danger" style="overflow:hidden;">
+            <div class="queue-header">
+              <h3>
+                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none"
+                  stroke="var(--danger)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
+                </svg>
+                Action Required
+              </h3>
+              <span class="badge badge-danger">2 Pending</span>
+            </div>
+            <div class="queue-item">
+              <div>
+                <div class="queue-id">Q-9021 &nbsp;<span class="badge badge-indigo"
+                    style="font-size:9px;padding:2px 6px;">SALES</span></div>
+                <div class="queue-desc">Enterprise discount approval for Acme Corp</div>
+              </div>
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="var(--muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="5" y1="12" x2="19" y2="12" />
+                <polyline points="12 5 19 12 12 19" />
+              </svg>
+            </div>
+            <div class="queue-item">
+              <div>
+                <div class="queue-id">Q-8834 &nbsp;<span class="badge badge-indigo"
+                    style="font-size:9px;padding:2px 6px;">SUPPORT</span></div>
+                <div class="queue-desc">Refund request exceeding automatic threshold</div>
+              </div>
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                stroke="var(--muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="5" y1="12" x2="19" y2="12" />
+                <polyline points="12 5 19 12 12 19" />
+              </svg>
+            </div>
+          </div>
+
+          <!-- Terminal logs -->
+          <div class="card" style="overflow:hidden;display:flex;flex-direction:column;">
+            <div class="terminal-bar">
+              <div class="terminal-dot" style="background:#ff5f56"></div>
+              <div class="terminal-dot" style="background:#ffbd2e"></div>
+              <div class="terminal-dot" style="background:#27c93f"></div>
+              <span class="terminal-title">system_trace.log</span>
+            </div>
+            <div id="terminal-logs"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ╔══════════════════ CHAT / TERMINAL ══════════════════╗ -->
+    <section id="view-chat" class="view">
+      <div id="chat-header">
+        <div>
+          <h2>Terminal Session</h2>
+          <div id="chat-session-label" style="font-size:11px;color:var(--muted);margin-top:2px;"></div>
+        </div>
+        <div class="badge badge-acid">
+          <span
+            style="width:7px;height:7px;border-radius:50%;background:var(--acid);display:inline-block;animation:pulse 1.5s infinite"></span>
+          Connected
+        </div>
+      </div>
+
+      <div id="chat-history">
+        <div id="chat-welcome">
+          <div class="bot-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none"
+              stroke="var(--indigo)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="11" width="18" height="10" rx="2" />
+              <circle cx="12" cy="5" r="2" />
+              <path d="M12 7v4" />
+              <line x1="8" y1="16" x2="8" y2="16" />
+              <line x1="16" y1="16" x2="16" y2="16" />
+            </svg>
+          </div>
+          <h3>System Ready</h3>
+          <p>Initiate a query regarding policies, sales processes, or system escalations. The routing engine will
+            automatically assign the optimal agent.</p>
+        </div>
+      </div>
+
+      <div id="chat-input-area">
+        <div class="chat-glow"></div>
+        <div class="chat-input-row">
+          <textarea id="chat-textarea" placeholder="Enter your system query…" rows="1"></textarea>
+          <button id="chat-send-btn">
+            EXECUTE
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none"
+              stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="22" y1="2" x2="11" y2="13" />
+              <polygon points="22 2 15 22 11 13 2 9 22 2" />
+            </svg>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ╔══════════════════ KNOWLEDGE ══════════════════╗ -->
+    <section id="view-knowledge" class="view">
+      <div class="inner">
+        <div class="page-header fade-up">
+          <div>
+            <h1>Knowledge Base</h1>
+            <p>RAG Ingestion Pipeline &amp; Document Management</p>
+          </div>
+        </div>
+
+        <div id="drop-zone" class="fade-up-d1">
+          <div class="toast" id="upload-toast"></div>
+          <input type="file" id="file-input" accept=".pdf,.txt" style="display:none" />
+          <div class="upload-icon" id="upload-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none"
+              stroke="var(--indigo)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="16 16 12 12 8 16" />
+              <line x1="12" y1="12" x2="12" y2="21" />
+              <path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3" />
+            </svg>
+          </div>
+          <h3 id="upload-heading">Upload Context File</h3>
+          <p id="upload-subtext">Drag and drop your PDF or TXT files here, or click to browse. Files will be vectorized
+            and added to the RAG database.</p>
+          <button class="browse-btn" id="browse-btn">Select File</button>
+        </div>
+
+        <div class="fade-up-d2">
+          <div class="section-divider">
+            <h3>Indexed Documents</h3>
+            <div class="search-wrap">
+              <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="11" cy="11" r="8" />
+                <line x1="21" y1="21" x2="16.65" y2="16.65" />
+              </svg>
+              <input class="search-input" type="text" placeholder="Search index…" />
+            </div>
+          </div>
+          <div class="card" style="overflow:hidden;">
+            <table>
+              <thead>
+                <tr>
+                  <th>Doc ID</th>
+                  <th>Filename</th>
+                  <th>Type</th>
+                  <th>Size</th>
+                  <th>Ingested</th>
+                  <th style="text-align:right">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="id-cell">DOC-1029</td>
+                  <td class="file-cell">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                      stroke="var(--muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                      <polyline points="14 2 14 8 20 8" />
+                    </svg>
+                    sales_playbook_2024.pdf
+                  </td>
+                  <td><span class="type-pill">PDF</span></td>
+                  <td class="muted-cell">2.4 MB</td>
+                  <td class="muted-cell">2024-05-20</td>
+                  <td style="text-align:right"><button class="action-btn"><svg xmlns="http://www.w3.org/2000/svg"
+                        width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                        <polyline points="7 10 12 15 17 10" />
+                        <line x1="12" y1="15" x2="12" y2="3" />
+                      </svg></button></td>
+                </tr>
+                <tr>
+                  <td class="id-cell">DOC-1030</td>
+                  <td class="file-cell">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                      stroke="var(--muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                      <polyline points="14 2 14 8 20 8" />
+                    </svg>
+                    refund_policy_v2.txt
+                  </td>
+                  <td><span class="type-pill">TXT</span></td>
+                  <td class="muted-cell">14 KB</td>
+                  <td class="muted-cell">2024-05-22</td>
+                  <td style="text-align:right"><button class="action-btn"><svg xmlns="http://www.w3.org/2000/svg"
+                        width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                        <polyline points="7 10 12 15 17 10" />
+                        <line x1="12" y1="15" x2="12" y2="3" />
+                      </svg></button></td>
+                </tr>
+                <tr>
+                  <td class="id-cell">DOC-1031</td>
+                  <td class="file-cell">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                      stroke="var(--muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                      <polyline points="14 2 14 8 20 8" />
+                    </svg>
+                    enterprise_pricing_tier.pdf
+                  </td>
+                  <td><span class="type-pill">PDF</span></td>
+                  <td class="muted-cell">1.1 MB</td>
+                  <td class="muted-cell">2024-05-23</td>
+                  <td style="text-align:right"><button class="action-btn"><svg xmlns="http://www.w3.org/2000/svg"
+                        width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                        stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                        <polyline points="7 10 12 15 17 10" />
+                        <line x1="12" y1="15" x2="12" y2="3" />
+                      </svg></button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ╔══════════════════ ADMIN ══════════════════╗ -->
+    <section id="view-admin" class="view">
+      <div class="inner">
+        <div class="page-header fade-up">
+          <div>
+            <h1>Admin Console</h1>
+            <p>Agent orchestration and workflow configurations.</p>
+          </div>
+        </div>
+
+        <div class="section-heading fade-up-d1">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+            stroke="var(--indigo)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="5" r="3" />
+            <path d="M12 22V8M5 12H2a10 10 0 0 0 20 0h-3" />
+          </svg>
+          <h2>Swarm Status</h2>
+        </div>
+
+        <div class="agents-grid fade-up-d1">
+          <!-- Router -->
+          <div class="agent-card">
+            <div class="agent-card-top">
+              <div class="agent-card-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                  stroke="var(--text)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="11" width="18" height="10" rx="2" />
+                  <circle cx="12" cy="5" r="2" />
+                  <path d="M12 7v4" />
+                </svg>
+              </div>
+              <span class="badge badge-acid" style="font-size:9px;padding:3px 8px;">
+                <span
+                  style="width:6px;height:6px;border-radius:50%;background:var(--acid);display:inline-block;animation:pulse 1.5s infinite"></span>
+                ONLINE
+              </span>
+            </div>
+            <div class="agent-name">Router Agent</div>
+            <div class="agent-role">Primary Traffic Controller</div>
+            <div class="agent-footer">
+              <span class="agent-footer-label">Latency</span>
+              <span class="agent-footer-value">12ms</span>
+            </div>
+          </div>
+          <!-- Support -->
+          <div class="agent-card">
+            <div class="agent-card-top">
+              <div class="agent-card-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                  stroke="var(--text)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="11" width="18" height="10" rx="2" />
+                  <circle cx="12" cy="5" r="2" />
+                  <path d="M12 7v4" />
+                </svg>
+              </div>
+              <span class="badge badge-acid" style="font-size:9px;padding:3px 8px;">
+                <span
+                  style="width:6px;height:6px;border-radius:50%;background:var(--acid);display:inline-block;animation:pulse 1.5s infinite"></span>
+                ONLINE
+              </span>
+            </div>
+            <div class="agent-name">Support Agent</div>
+            <div class="agent-role">Policy &amp; Refunds</div>
+            <div class="agent-footer">
+              <span class="agent-footer-label">Latency</span>
+              <span class="agent-footer-value">45ms</span>
+            </div>
+          </div>
+          <!-- Sales -->
+          <div class="agent-card">
+            <div class="agent-card-top">
+              <div class="agent-card-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                  stroke="var(--text)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="11" width="18" height="10" rx="2" />
+                  <circle cx="12" cy="5" r="2" />
+                  <path d="M12 7v4" />
+                </svg>
+              </div>
+              <span class="badge badge-acid" style="font-size:9px;padding:3px 8px;">
+                <span
+                  style="width:6px;height:6px;border-radius:50%;background:var(--acid);display:inline-block;animation:pulse 1.5s infinite"></span>
+                ONLINE
+              </span>
+            </div>
+            <div class="agent-name">Sales Agent</div>
+            <div class="agent-role">Pricing &amp; Enterprise</div>
+            <div class="agent-footer">
+              <span class="agent-footer-label">Latency</span>
+              <span class="agent-footer-value">38ms</span>
+            </div>
+          </div>
+          <!-- Escalation -->
+          <div class="agent-card">
+            <div class="agent-card-top">
+              <div class="agent-card-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                  stroke="var(--text)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="11" width="18" height="10" rx="2" />
+                  <circle cx="12" cy="5" r="2" />
+                  <path d="M12 7v4" />
+                </svg>
+              </div>
+              <span class="badge badge-muted" style="font-size:9px;padding:3px 8px;">STANDBY</span>
+            </div>
+            <div class="agent-name">Escalation Agent</div>
+            <div class="agent-role">Human Handoff</div>
+            <div class="agent-footer">
+              <span class="agent-footer-label">Latency</span>
+              <span class="agent-footer-value">—</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="section-heading fade-up-d2">
+          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+            stroke="var(--indigo)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="3" width="6" height="6" rx="1" />
+            <rect x="16" y="3" width="6" height="6" rx="1" />
+            <rect x="2" y="15" width="6" height="6" rx="1" />
+            <path d="M5 9v3a7 7 0 0 0 7 7" />
+            <path d="M19 9v3a7 7 0 0 1-7 7" />
+          </svg>
+          <h2>n8n Workflows</h2>
+        </div>
+
+        <div class="wf-list fade-up-d2">
+          <div class="wf-item">
+            <div class="wf-left">
+              <div class="wf-icon" id="wf-icon-1" style="color:var(--acid)">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+                </svg>
+              </div>
+              <div>
+                <div class="wf-name">Sales Escalation Pipeline</div>
+                <div class="wf-id">ID: wf_1</div>
+              </div>
+            </div>
+            <div class="toggle on" id="toggle-1" onclick="toggleWF(this,'wf-icon-1')">
+              <div class="toggle-knob"></div>
+            </div>
+          </div>
+          <div class="wf-item">
+            <div class="wf-left">
+              <div class="wf-icon" id="wf-icon-2" style="color:var(--acid)">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+                </svg>
+              </div>
+              <div>
+                <div class="wf-name">Refund Automation</div>
+                <div class="wf-id">ID: wf_2</div>
+              </div>
+            </div>
+            <div class="toggle on" id="toggle-2" onclick="toggleWF(this,'wf-icon-2')">
+              <div class="toggle-knob"></div>
+            </div>
+          </div>
+          <div class="wf-item">
+            <div class="wf-left">
+              <div class="wf-icon" id="wf-icon-3" style="color:var(--muted)">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+                </svg>
+              </div>
+              <div>
+                <div class="wf-name">RAG Vector Update Sync</div>
+                <div class="wf-id">ID: wf_3</div>
+              </div>
+            </div>
+            <div class="toggle" id="toggle-3" onclick="toggleWF(this,'wf-icon-3')">
+              <div class="toggle-knob"></div>
+            </div>
+          </div>
+          <div class="wf-item">
+            <div class="wf-left">
+              <div class="wf-icon" id="wf-icon-4" style="color:var(--acid)">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none"
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+                </svg>
+              </div>
+              <div>
+                <div class="wf-name">Nightly Data Backup</div>
+                <div class="wf-id">ID: wf_4</div>
+              </div>
+            </div>
+            <div class="toggle on" id="toggle-4" onclick="toggleWF(this,'wf-icon-4')">
+              <div class="toggle-knob"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script>
+    // ══════════════════════════════════════════════════
+    // ROUTING — hash-based SPA navigation
+    // ══════════════════════════════════════════════════
+    const navItems = document.querySelectorAll('.nav-item');
+    const views = document.querySelectorAll('.view');
+
+    function switchView(viewId) {
+      views.forEach(v => v.classList.remove('active'));
+      navItems.forEach(n => n.classList.remove('active'));
+
+      const view = document.getElementById('view-' + viewId);
+      if (view) view.classList.add('active');
+
+      navItems.forEach(n => {
+        if (n.dataset.view === viewId) n.classList.add('active');
+      });
+    }
+
+    navItems.forEach(item => {
+      item.addEventListener('click', e => {
+        e.preventDefault();
+        const v = item.dataset.view;
+        switchView(v);
+        history.pushState(null, '', '#' + v);
+      });
+    });
+
+    function routeFromHash() {
+      const hash = window.location.hash.replace('#', '') || 'dashboard';
+      const valid = ['dashboard', 'chat', 'knowledge', 'admin'];
+      switchView(valid.includes(hash) ? hash : 'dashboard');
+    }
+    window.addEventListener('popstate', routeFromHash);
+    routeFromHash(); // initial
+
+    // ══════════════════════════════════════════════════
+    // TERMINAL LOGS
+    // ══════════════════════════════════════════════════
+    const termEl = document.getElementById('terminal-logs');
+    const mockLogs = [
+      { text: '[ROUTER] Query "refund policy" routed to SUPPORT', cls: 'log-router' },
+      { text: '[SUPPORT] Processing query #49281…', cls: 'log-support' },
+      { text: '[SUPPORT] Response generated in 402ms', cls: 'log-support' },
+      { text: '[ROUTER] Query "enterprise pricing" → SALES', cls: 'log-router' },
+      { text: '[SALES] Escalating — HIGH VALUE lead detected', cls: 'log-escalate' },
+      { text: '[SYSTEM] Memory usage at 42%', cls: 'log-system' },
+      { text: '[ROUTER] Query "reset password" → SUPPORT', cls: 'log-router' },
+      { text: '[SUPPORT] Resolved automatically', cls: 'log-support' },
+    ];
+
+    function ts() { return new Date().toISOString().split('T')[1].substring(0, 8); }
+
+    function addLog(text, cls) {
+      const line = document.createElement('div');
+      line.className = 'log-line';
+      line.innerHTML = `<span class="log-ts">${ts()}</span><span class="${cls}">${text}</span>`;
+      termEl.appendChild(line);
+      const all = termEl.querySelectorAll('.log-line');
+      if (all.length > 8) all[0].remove();
+      termEl.scrollTop = termEl.scrollHeight;
+    }
+
+    // seed
+    addLog('[SYSTEM] Initialization sequence started', 'log-system');
+    addLog('[ROUTER] Active agents: 4, Standby: 0', 'log-router');
+    addLog('[DB] Connection established in 12ms', 'log-support');
+
+    let li = 0;
+    setInterval(() => { const l = mockLogs[li++ % mockLogs.length]; addLog(l.text, l.cls); }, 3000);
+
+    // ══════════════════════════════════════════════════
+    // CHAT
+    // ══════════════════════════════════════════════════
+    const SESSION_ID = 'session_' + Math.random().toString(36).substring(7);
+    document.getElementById('chat-session-label').textContent = 'ID: ' + SESSION_ID;
+
+    const chatHistory = document.getElementById('chat-history');
+    const chatWelcome = document.getElementById('chat-welcome');
+    const chatTextarea = document.getElementById('chat-textarea');
+    const chatSendBtn = document.getElementById('chat-send-btn');
+
+    function escapeHtml(t) {
+      return t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    }
+
+    function appendMsg(role, content, route, requiresApproval, sources) {
+      if (chatWelcome) chatWelcome.style.display = 'none';
+
+      let metaHTML = '';
+      if (role === 'ai' && (route || requiresApproval)) {
+        metaHTML = '<div class="msg-meta">';
+        if (route) metaHTML += `<span class="badge badge-muted" style="font-size:10px;">[ROUTE: ${escapeHtml(route)}]</span>`;
+        if (requiresApproval) metaHTML += `<span class="badge badge-danger" style="font-size:10px;">⚠ REQUIRES APPROVAL</span>`;
+        metaHTML += '</div>';
+      }
+
+      let srcHTML = '';
+      if (sources && sources.length) {
+        srcHTML = '<div class="sources-section"><div class="sources-label">Reference Sources</div>';
+        sources.forEach((s, i) => {
+          srcHTML += `<div class="source-item"><span class="source-num">[${i + 1}]</span><span>${escapeHtml(s)}</span></div>`;
+        });
+        srcHTML += '</div>';
+      }
+
+      const row = document.createElement('div');
+      row.className = 'msg-row fade-up ' + role;
+
+      if (role === 'user') {
+        row.innerHTML = `
+      <div class="msg-bubble user">
+        <div style="white-space:pre-wrap">${escapeHtml(content)}</div>
+      </div>`;
+      } else {
+        row.innerHTML = `
+      <div class="msg-bubble ai">
+        <div class="ai-icon">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--indigo)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2"/><circle cx="12" cy="5" r="2"/><path d="M12 7v4"/></svg>
+        </div>
+        <div style="flex:1">
+          ${metaHTML}
+          <div style="white-space:pre-wrap">${escapeHtml(content)}</div>
+          ${srcHTML}
+        </div>
+      </div>`;
+      }
+
+      chatHistory.appendChild(row);
+      chatHistory.scrollTop = chatHistory.scrollHeight;
+    }
+
+    function setLoading(on) {
+      chatSendBtn.disabled = on;
+      chatTextarea.disabled = on;
+      if (on) {
+        chatSendBtn.innerHTML = `<span class="spinner">⟳</span> Processing…`;
+      } else {
+        chatSendBtn.innerHTML = `EXECUTE <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>`;
+      }
+    }
+
+    async function sendChat() {
+      const query = chatTextarea.value.trim();
+      if (!query || chatSendBtn.disabled) return;
+
+      appendMsg('user', query);
+      chatTextarea.value = '';
+      setLoading(true);
+
+      // loading bubble
+      const loadId = 'load-' + Date.now();
+      const loadRow = document.createElement('div');
+      loadRow.id = loadId;
+      loadRow.className = 'msg-row ai fade-up';
+      loadRow.innerHTML = `
+    <div class="msg-bubble ai">
+      <div class="ai-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--indigo)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+      </div>
+      <div style="color:var(--muted);font-size:13px;">Processing query via routing engine<span style="animation:blink 1s step-end infinite">…</span></div>
+    </div>`;
+      chatHistory.appendChild(loadRow);
+      chatHistory.scrollTop = chatHistory.scrollHeight;
+
+      try {
+        const res = await fetch('http://127.0.0.1:8000/api/v1/query', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query, session_id: SESSION_ID })
+        });
+        document.getElementById(loadId)?.remove();
+        if (!res.ok) throw new Error('HTTP ' + res.status);
+        const data = await res.json();
+        appendMsg('ai', data.answer, data.route_taken, data.requires_approval, data.sources);
+      } catch (err) {
+        document.getElementById(loadId)?.remove();
+        appendMsg('ai', '⚠ Error connecting to backend multi-agent swarm.\n' + err.message);
+      } finally {
+        setLoading(false);
+        chatTextarea.focus();
+      }
+    }
+
+    chatSendBtn.addEventListener('click', sendChat);
+    chatTextarea.addEventListener('keydown', e => {
+      if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChat(); }
+    });
+
+    // ══════════════════════════════════════════════════
+    // KNOWLEDGE UPLOAD
+    // ══════════════════════════════════════════════════
+    const dropZone = document.getElementById('drop-zone');
+    const fileInput = document.getElementById('file-input');
+    const browseBtn = document.getElementById('browse-btn');
+    const uploadToast = document.getElementById('upload-toast');
+    const uploadIcon = document.getElementById('upload-icon');
+    const uploadHeading = document.getElementById('upload-heading');
+    const uploadSubtext = document.getElementById('upload-subtext');
+
+    function showToast(type, msg) {
+      uploadToast.className = 'toast ' + type;
+      uploadToast.textContent = msg;
+      uploadToast.style.display = 'flex';
+      setTimeout(() => { uploadToast.style.display = 'none'; }, 4500);
+    }
+
+    async function handleUpload(file) {
+      if (!file) return;
+      uploadIcon.innerHTML = `<div class="spinner" style="font-size:24px;color:var(--indigo);">⟳</div>`;
+      uploadHeading.textContent = 'Ingesting Document…';
+      uploadSubtext.textContent = 'Vectorizing and chunking ' + file.name + '…';
+      dropZone.style.pointerEvents = 'none';
+      dropZone.style.opacity = '0.75';
+
+      const fd = new FormData();
+      fd.append('file', file);
+      try {
+        const r = await fetch('http://127.0.0.1:8000/api/v1/upload', { method: 'POST', body: fd });
+        if (!r.ok) throw new Error('Upload failed');
+        showToast('success', '✓ Ingestion Complete');
+      } catch {
+        showToast('error', '✕ Ingestion Failed — check backend');
+      } finally {
+        uploadIcon.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--indigo)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 16 12 12 8 16"/><line x1="12" y1="12" x2="12" y2="21"/><path d="M20.39 18.39A5 5 0 0 0 18 9h-1.26A8 8 0 1 0 3 16.3"/></svg>`;
+        uploadHeading.textContent = 'Upload Context File';
+        uploadSubtext.textContent = 'Drag and drop your PDF or TXT files here, or click to browse. Files will be vectorized and added to the RAG database.';
+        dropZone.style.pointerEvents = '';
+        dropZone.style.opacity = '';
+        fileInput.value = '';
+      }
+    }
+
+    browseBtn.addEventListener('click', e => { e.stopPropagation(); fileInput.click(); });
+    dropZone.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', e => { if (e.target.files[0]) handleUpload(e.target.files[0]); });
+    dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+    dropZone.addEventListener('drop', e => {
+      e.preventDefault(); dropZone.classList.remove('dragover');
+      if (e.dataTransfer.files[0]) handleUpload(e.dataTransfer.files[0]);
+    });
+
+    // ══════════════════════════════════════════════════
+    // ADMIN TOGGLES
+    // ══════════════════════════════════════════════════
+    function toggleWF(toggleEl, iconId) {
+      const on = toggleEl.classList.toggle('on');
+      const icon = document.getElementById(iconId);
+      if (icon) icon.style.color = on ? 'var(--acid)' : 'var(--muted)';
+    }
+  </script>
+</body>
+
+</html>

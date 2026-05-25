@@ -1,0 +1,324 @@
+{
+  "name": "My workflow 2",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "ai-ops-hub",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "d470e955-3e01-4e66-b218-2534bef977ff",
+      "name": "Webhook",
+      "webhookId": "5df46c55-a370-4dc4-8601-e28238fbfae6"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.body.route_taken }}",
+                    "rightValue": "sales",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "3ea8a9d8-7e52-4174-b5d1-000d0662db6f"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "id": "507b40dd-8a07-4b9c-ab00-fc9e87450e6e",
+                    "leftValue": "={{ $json.body.route_taken }}",
+                    "rightValue": "escalation",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        208,
+        0
+      ],
+      "id": "6b2cfee7-6ff1-4561-b1b9-18ab479ba0e0",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "authentication": "webhook",
+        "content": "=New Lead! Score: {{ $json[\"Lead Score\"] }}/10. Summary: {{ $json.Summary }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        656,
+        -96
+      ],
+      "id": "d232fdc3-6390-4571-9997-5105c39d15c7",
+      "name": "Discord",
+      "webhookId": "6dafd545-41fd-4a4d-82ab-168fc9bb32c5",
+      "credentials": {
+        "discordWebhookApi": {
+          "id": "Tj0KxuO454QxtZx5",
+          "name": "Discord Webhook account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "appendOrUpdate",
+        "documentId": {
+          "__rl": true,
+          "value": "1USXaoaICuOanBnhHLkdsTVWggx6_JTeY64OhbYMcVwg",
+          "mode": "list",
+          "cachedResultName": "AI Leads",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1USXaoaICuOanBnhHLkdsTVWggx6_JTeY64OhbYMcVwg/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1USXaoaICuOanBnhHLkdsTVWggx6_JTeY64OhbYMcVwg/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Lead Score": "={{ $json.body.extracted_data.lead_score }}",
+            "Summary": "={{ $json.body.extracted_data.summary }}",
+            "Date": "={{ $now }}"
+          },
+          "matchingColumns": [
+            "Date"
+          ],
+          "schema": [
+            {
+              "id": "Date",
+              "displayName": "Date",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Lead Score",
+              "displayName": "Lead Score",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Summary",
+              "displayName": "Summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        480,
+        -96
+      ],
+      "id": "2c26816b-269d-4a58-a5ca-f0693d503118",
+      "name": "Append or update row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "T1Jyk4KY4mbjaiwB",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resume": "webhook",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        656,
+        128
+      ],
+      "id": "45ba69b9-5c78-4e20-a3ce-b9a893f21c1b",
+      "name": "Wait",
+      "webhookId": "9d51f779-8abd-4a28-81ef-f1f6ffdf9061"
+    },
+    {
+      "parameters": {
+        "authentication": "webhook",
+        "content": "=🚨 ESCALATION ALERT! A customer is angry. AI drafted this response: \"{{ $json.body.ai_answer }}\".\nClick here to APPROVE and send the email: <{{ $execution.resumeUrl }}>",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.discord",
+      "typeVersion": 2,
+      "position": [
+        480,
+        128
+      ],
+      "id": "3ac424b9-e6ab-4d48-a0e0-b05751d020a8",
+      "name": "Discord1",
+      "webhookId": "e721c6c1-a3e9-4bec-9dc7-a4075d303743",
+      "credentials": {
+        "discordWebhookApi": {
+          "id": "Tj0KxuO454QxtZx5",
+          "name": "Discord Webhook account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "alyyanawan19@gmail.com",
+        "subject": "Customer Support",
+        "emailType": "text",
+        "message": "={{ $('Switch').item.json.body.ai_answer }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.2,
+      "position": [
+        832,
+        128
+      ],
+      "id": "8bd6a7c5-dc29-4308-b81c-9bb7e38614ab",
+      "name": "Send a message",
+      "webhookId": "2018221a-aa8c-4415-8e64-8a535b792ec6",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "KHIbpit93IrkvF0P",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Append or update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Discord1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Discord": {
+      "main": [
+        []
+      ]
+    },
+    "Append or update row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Discord",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Discord1": {
+      "main": [
+        [
+          {
+            "node": "Wait",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "55e31a82-a223-45c6-8730-612afb0b664e",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "0f628c99fcb1a71a4b9a9f5454800383ed4b5c26785524e9d2e857842f9c0fc0"
+  },
+  "id": "5GSsW6XtbaapSaka",
+  "tags": []
+}
