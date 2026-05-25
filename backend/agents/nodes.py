@@ -1,10 +1,13 @@
-# backend/agents/nodes.py
+import json
+from dotenv import load_dotenv
 from langchain_groq import ChatGroq
 from langchain_core.prompts import PromptTemplate
 from agents.state import AgentState
 from rag.retriever import ask_knowledge_base
 from utils.logger import logger
-import json
+
+# Load env vars before initializing Groq
+load_dotenv()
 
 # Initialize the LLM
 llm = ChatGroq(model="llama-3.1-8b-instant", temperature=0)

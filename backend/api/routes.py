@@ -7,6 +7,7 @@ from rag.ingestion import process_uploaded_file
 from rag.retriever import ask_knowledge_base
 from agents.workflow import agent_app
 from utils.logger import logger
+from services.n8n_client import trigger_n8n_workflow
 
 router = APIRouter()
 
@@ -72,7 +73,19 @@ async def process_query(request: QueryRequest):
         # 2. Run the Multi-Agent Workflow!
         final_state = agent_app.invoke(initial_state)
         
-        # 3. Return the final result
+                # Prepare the payload for n8n
+        n8n_payload = {
+            "session_id": request.session_id,
+            "route_taken": final_state.get("route", "unknown"),
+            "requires_approval": final_state.get("requires_approval", False),
+            "extracted_data": final_state.get("extracted_data", {}),
+            "ai_answer": final_state.get("answer", "")
+        }
+        
+        # Trigger n8n in the background!
+        await trigger_n8n_workflow(n8n_payload)
+        
+        # 3. Return the final result to the user
         return QueryResponse(
             answer=final_state.get("answer", ""),
             sources=final_state.get("sources", []),

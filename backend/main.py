@@ -1,12 +1,12 @@
 # backend/main.py
+from dotenv import load_dotenv
+# LOAD ENV VARS FIRST BEFORE IMPORTING ANYTHING ELSE!
+load_dotenv()
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from dotenv import load_dotenv
 from api.routes import router
 from utils.logger import logger
-
-# LOAD ENVIRONMENT VARIABLES (This activates LangSmith and Groq!)
-load_dotenv()
 
 logger.info("Starting AI Operations Hub API...")
 
