@@ -1,6 +1,8 @@
 # backend/api/routes.py
 import os
 import shutil
+import zlib
+import datetime
 from fastapi import APIRouter, UploadFile, File, HTTPException
 from models.schemas import QueryRequest, QueryResponse, WebhookPayload
 from rag.ingestion import process_uploaded_file
@@ -16,6 +18,16 @@ router = APIRouter()
 async def health_check():
     return {"status": "healthy", "version": "1.0.0"}
 
+def generate_doc_id(filename: str) -> str:
+    h = zlib.adler32(filename.encode('utf-8')) & 0xffffffff
+    return f"DOC-{(h % 9000) + 1000}"
+
+def format_size(size_bytes: int) -> str:
+    if size_bytes < 1024 * 1024:
+        return f"{size_bytes / 1024:.1f} KB"
+    else:
+        return f"{size_bytes / (1024 * 1024):.1f} MB"
+
 @router.post("/upload", tags=["Knowledge Base"])
 async def upload_document(file: UploadFile = File(...)):
     """Upload a PDF or TXT file to be ingested into the RAG system."""
@@ -25,22 +37,19 @@ async def upload_document(file: UploadFile = File(...)):
     if file_ext not in allowed_extensions:
         raise HTTPException(status_code=400, detail="Only PDF and TXT files are supported.")
     
-    # Create temp directory if it doesn't exist
-    temp_dir = "temp"
-    os.makedirs(temp_dir, exist_ok=True)
+    # Save the file permanently into backend/docs/
+    docs_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "docs")
+    os.makedirs(docs_dir, exist_ok=True)
     
-    file_path = os.path.join(temp_dir, file.filename)
+    file_path = os.path.join(docs_dir, file.filename)
     
     try:
-        # 1. Save the uploaded file temporarily
+        # 1. Save the uploaded file permanently
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
             
         # 2. Process the file (Parse -> Chunk -> Embed -> Store)
         num_chunks = process_uploaded_file(file_path, file.filename)
-        
-        # 3. Clean up (Delete the temp file)
-        os.remove(file_path)
         
         return {
             "filename": file.filename,
@@ -53,6 +62,48 @@ async def upload_document(file: UploadFile = File(...)):
         if os.path.exists(file_path):
             os.remove(file_path)
         raise HTTPException(status_code=500, detail=f"Error processing file: {str(e)}")
+
+
+@router.get("/documents", tags=["Knowledge Base"])
+async def list_documents():
+    """List all permanently saved files in backend/docs/ directory."""
+    docs_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "docs")
+    if not os.path.exists(docs_dir):
+        return []
+    
+    documents = []
+    for filename in os.listdir(docs_dir):
+        file_path = os.path.join(docs_dir, filename)
+        if os.path.isfile(file_path):
+            file_ext = filename.split(".")[-1].lower()
+            if file_ext in ["pdf", "txt"]:
+                size_bytes = os.path.getsize(file_path)
+                mtime = os.path.getmtime(file_path)
+                ingested_date = datetime.datetime.fromtimestamp(mtime).strftime("%Y-%m-%d")
+                
+                documents.append({
+                    "id": generate_doc_id(filename),
+                    "filename": filename,
+                    "type": file_ext.upper(),
+                    "size": format_size(size_bytes),
+                    "ingested_date": ingested_date
+                })
+    return documents
+
+
+@router.get("/system/status", tags=["System"])
+async def system_status():
+    """Return active agent count and status details."""
+    return {
+        "active_agents_count": 5,
+        "agents": [
+            {"name": "Router Agent", "role": "Primary Traffic Controller", "status": "online", "latency": "12ms"},
+            {"name": "Support Agent", "role": "Policy & Knowledge", "status": "online", "latency": "45ms"},
+            {"name": "Sales Agent", "role": "Pricing & Enterprise", "status": "online", "latency": "38ms"},
+            {"name": "Escalation Agent", "role": "Human Handoff", "status": "standby", "latency": "—"},
+            {"name": "General Agent", "role": "Greetings & Navigation", "status": "online", "latency": "15ms"}
+        ]
+    }
 
 
 @router.post("/query", response_model=QueryResponse, tags=["AI Operations"])

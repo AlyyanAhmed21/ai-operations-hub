@@ -1,0 +1,5 @@
+This is a dummy operations hub policy file.
+It contains details about standard support escalation procedures.
+For sales issues, escalate to the primary Sales Agent.
+For refunds, escalate to the Support Agent.
+For any general questions, route to General Agent.

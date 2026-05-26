@@ -1378,9 +1378,9 @@
 
     <div id="sidebar-footer">
       <div class="system-status">
-        <div class="status-dot"></div>
+        <div class="status-dot" id="sidebar-status-dot"></div>
         <div>
-          <div class="status-label">System Online</div>
+          <div class="status-label" id="sidebar-status-label">System Online</div>
           <div class="status-sub">v1.0.0 · vanilla</div>
         </div>
       </div>
@@ -1438,7 +1438,7 @@
                   <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16" />
                 </svg>
               </div>
-              <div class="stat-value-sm">4</div>
+              <div class="stat-value-sm" id="active-agents-count">4</div>
             </div>
             <div class="card border-acid bento-small"
               style="flex:1;display:flex;flex-direction:column;justify-content:space-between;">
@@ -1517,10 +1517,10 @@
           <h2>Terminal Session</h2>
           <div id="chat-session-label" style="font-size:11px;color:var(--muted);margin-top:2px;"></div>
         </div>
-        <div class="badge badge-acid">
+        <div class="badge badge-acid" id="chat-status-badge">
           <span
-            style="width:7px;height:7px;border-radius:50%;background:var(--acid);display:inline-block;animation:pulse 1.5s infinite"></span>
-          Connected
+            style="width:7px;height:7px;border-radius:50%;background:var(--acid);display:inline-block;animation:pulse 1.5s infinite" id="chat-status-dot"></span>
+          <span id="chat-status-text">Connected</span>
         </div>
       </div>
 
@@ -1609,7 +1609,7 @@
                   <th style="text-align:right">Action</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody id="documents-tbody">
                 <tr>
                   <td class="id-cell">DOC-1029</td>
                   <td class="file-cell">
@@ -1699,7 +1699,7 @@
           <h2>Swarm Status</h2>
         </div>
 
-        <div class="agents-grid fade-up-d1">
+        <div class="agents-grid fade-up-d1" id="agents-grid">
           <!-- Router -->
           <div class="agent-card">
             <div class="agent-card-top">
@@ -2130,6 +2130,7 @@
         const r = await fetch('http://127.0.0.1:8000/api/v1/upload', { method: 'POST', body: fd });
         if (!r.ok) throw new Error('Upload failed');
         showToast('success', '✓ Ingestion Complete');
+        loadDocuments();
       } catch {
         showToast('error', '✕ Ingestion Failed — check backend');
       } finally {
@@ -2160,6 +2161,163 @@
       const icon = document.getElementById(iconId);
       if (icon) icon.style.color = on ? 'var(--acid)' : 'var(--muted)';
     }
+
+    // ══════════════════════════════════════════════════
+    // FULLSTACK DYNAMIC DATA INTEGRATION
+    // ══════════════════════════════════════════════════
+
+    async function pollHealth() {
+      const sidebarDot = document.getElementById('sidebar-status-dot');
+      const sidebarLabel = document.getElementById('sidebar-status-label');
+      const chatBadge = document.getElementById('chat-status-badge');
+      const chatDot = document.getElementById('chat-status-dot');
+      const chatText = document.getElementById('chat-status-text');
+
+      try {
+        const res = await fetch('http://127.0.0.1:8000/api/v1/health');
+        if (res.ok) {
+          if (sidebarDot) {
+            sidebarDot.style.background = 'var(--acid)';
+            sidebarDot.style.boxShadow = '0 0 8px var(--acid-glow)';
+            sidebarDot.style.animation = 'pulse 2s infinite';
+          }
+          if (sidebarLabel) sidebarLabel.textContent = 'System Online';
+
+          if (chatBadge) chatBadge.className = 'badge badge-acid';
+          if (chatDot) {
+            chatDot.style.background = 'var(--acid)';
+            chatDot.style.animation = 'pulse 1.5s infinite';
+            chatDot.style.display = 'inline-block';
+          }
+          if (chatText) chatText.textContent = 'Connected';
+        } else {
+          throw new Error('Not OK');
+        }
+      } catch (err) {
+        if (sidebarDot) {
+          sidebarDot.style.background = 'var(--danger)';
+          sidebarDot.style.boxShadow = 'none';
+          sidebarDot.style.animation = 'none';
+        }
+        if (sidebarLabel) sidebarLabel.textContent = 'Disconnected';
+
+        if (chatBadge) chatBadge.className = 'badge badge-danger';
+        if (chatDot) chatDot.style.display = 'none';
+        if (chatText) chatText.textContent = 'Disconnected';
+      }
+    }
+
+    async function loadDocuments() {
+      const tbody = document.getElementById('documents-tbody');
+      if (!tbody) return;
+
+      try {
+        const res = await fetch('http://127.0.0.1:8000/api/v1/documents');
+        if (!res.ok) throw new Error('Failed to fetch documents');
+        const docs = await res.json();
+
+        tbody.innerHTML = '';
+        if (docs.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="6" class="muted-cell" style="text-align:center;padding:24px;">No indexed documents found.</td></tr>`;
+          return;
+        }
+
+        docs.forEach(doc => {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td class="id-cell">${escapeHtml(doc.id)}</td>
+            <td class="file-cell">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none"
+                stroke="var(--muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                <polyline points="14 2 14 8 20 8" />
+              </svg>
+              ${escapeHtml(doc.filename)}
+            </td>
+            <td><span class="type-pill">${escapeHtml(doc.type)}</span></td>
+            <td class="muted-cell">${escapeHtml(doc.size)}</td>
+            <td class="muted-cell">${escapeHtml(doc.ingested_date)}</td>
+            <td style="text-align:right">
+              <button class="action-btn">
+                <svg xmlns="http://www.w3.org/2000/svg"
+                  width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                  <polyline points="7 10 12 15 17 10" />
+                  <line x1="12" y1="15" x2="12" y2="3" />
+                </svg>
+              </button>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+      } catch (err) {
+        console.error('Error loading documents:', err);
+      }
+    }
+
+    async function loadSystemStatus() {
+      const activeCountEl = document.getElementById('active-agents-count');
+      const gridEl = document.getElementById('agents-grid');
+      if (!activeCountEl || !gridEl) return;
+
+      try {
+        const res = await fetch('http://127.0.0.1:8000/api/v1/system/status');
+        if (!res.ok) throw new Error('Failed to fetch system status');
+        const data = await res.json();
+
+        // Update dashboard count
+        activeCountEl.textContent = data.active_agents_count;
+
+        // Render agent cards
+        gridEl.innerHTML = '';
+        data.agents.forEach(agent => {
+          const card = document.createElement('div');
+          card.className = 'agent-card';
+
+          let badgeHTML = '';
+          if (agent.status === 'online') {
+            badgeHTML = `
+              <span class="badge badge-acid" style="font-size:9px;padding:3px 8px;">
+                <span
+                  style="width:6px;height:6px;border-radius:50%;background:var(--acid);display:inline-block;animation:pulse 1.5s infinite"></span>
+                ONLINE
+              </span>`;
+          } else {
+            badgeHTML = `<span class="badge badge-muted" style="font-size:9px;padding:3px 8px;">STANDBY</span>`;
+          }
+
+          card.innerHTML = `
+            <div class="agent-card-top">
+              <div class="agent-card-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none"
+                  stroke="var(--text)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="3" y="11" width="18" height="10" rx="2" />
+                  <circle cx="12" cy="5" r="2" />
+                  <path d="M12 7v4" />
+                </svg>
+              </div>
+              ${badgeHTML}
+            </div>
+            <div class="agent-name">${escapeHtml(agent.name)}</div>
+            <div class="agent-role">${escapeHtml(agent.role)}</div>
+            <div class="agent-footer">
+              <span class="agent-footer-label">Latency</span>
+              <span class="agent-footer-value">${escapeHtml(agent.latency)}</span>
+            </div>
+          `;
+          gridEl.appendChild(card);
+        });
+      } catch (err) {
+        console.error('Error loading system status:', err);
+      }
+    }
+
+    // Initialize full-stack dynamic integrations
+    pollHealth();
+    setInterval(pollHealth, 10000);
+    loadDocuments();
+    loadSystemStatus();
   </script>
 </body>
 
