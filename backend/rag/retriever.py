@@ -6,15 +6,13 @@ from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_chroma import Chroma
 from langchain_core.prompts import PromptTemplate
 from utils.logger import logger
-from rag.memory import get_chat_history, save_message # Import our new memory system
+from services.memory import get_chat_history
 
 CHROMA_PATH = "./chroma_db"
 
 def ask_knowledge_base(query: str, session_id: str = "default", document_filter: Optional[str] = None):
     logger.info(f"Searching knowledge base for query: '{query}' (Session: {session_id})")
     
-    # 1. Save the user's new question to memory
-    save_message(session_id, "user", query)
     
     # 2. Retrieve past conversation history
     chat_history = get_chat_history(session_id)
@@ -72,8 +70,6 @@ def ask_knowledge_base(query: str, session_id: str = "default", document_filter:
         "question": query
     })
     
-    # 5. Save the AI's answer to memory
-    save_message(session_id, "assistant", response.content)
     
     return {
         "answer": response.content,

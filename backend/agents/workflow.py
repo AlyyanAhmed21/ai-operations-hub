@@ -1,7 +1,7 @@
 # backend/agents/workflow.py
 from langgraph.graph import StateGraph, END
 from agents.state import AgentState
-from agents.nodes import router_node, support_node, sales_node, escalation_node
+from agents.nodes import router_node, support_node, sales_node, escalation_node, general_node
 from utils.logger import logger
 
 def route_decision(state: AgentState) -> str:
@@ -19,6 +19,7 @@ def build_agentic_workflow():
     workflow.add_node("support", support_node)
     workflow.add_node("sales", sales_node)
     workflow.add_node("escalation", escalation_node)
+    workflow.add_node("general", general_node) # NEW AGENT
     
     # 2. Set the entry point (Every query hits the router first)
     workflow.set_entry_point("router")
@@ -30,7 +31,8 @@ def build_agentic_workflow():
         {
             "support": "support",
             "sales": "sales",
-            "escalation": "escalation"
+            "escalation": "escalation",
+            "general": "general" # NEW ROUTE
         }
     )
     
@@ -38,9 +40,11 @@ def build_agentic_workflow():
     workflow.add_edge("support", END)
     workflow.add_edge("sales", END)
     workflow.add_edge("escalation", END)
+    workflow.add_edge("general", END) # NEW END
     
     # Compile the graph
     return workflow.compile()
 
+# THIS IS THE LINE THAT WAS MISSING! 👇
 # Create a global instance of the app to use in our API
 agent_app = build_agentic_workflow()

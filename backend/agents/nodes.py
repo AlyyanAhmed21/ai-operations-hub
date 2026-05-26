@@ -5,6 +5,7 @@ from langchain_core.prompts import PromptTemplate
 from agents.state import AgentState
 from rag.retriever import ask_knowledge_base
 from utils.logger import logger
+from services.memory import get_chat_history
 
 # Load env vars before initializing Groq
 load_dotenv()
@@ -16,25 +17,31 @@ def router_node(state: AgentState) -> AgentState:
     """Analyzes the query and routes it to the correct agent."""
     logger.info(f"🧭 [Router Agent] Analyzing query: '{state['query']}'")
     
-    prompt = """
-    You are the Master Routing Agent. Classify the user's query into EXACTLY ONE of these three categories:
-    1. "support" - For questions about policies, knowledge, troubleshooting, or general info.
+    # Fetch the recent conversation history
+    history = get_chat_history(state["session_id"])
+    
+    prompt = f"""
+    You are the Master Routing Agent. 
+    
+    Recent Conversation History:
+    {history}
+    
+    Latest User Query: "{state['query']}"
+    
+    Based on the context, classify the LATEST query into EXACTLY ONE of these four categories:
+    1. "support" - For questions about company policies, documents, employees, specific people, troubleshooting, or factual information.
     2. "sales" - For questions about pricing, buying, or upgrading.
     3. "escalation" - For angry customers, legal threats, or refund demands.
-    
-    Query: {query}
+    4. "general" - For simple greetings (hi, hello) or asking what you can do.
     
     Output ONLY the category word in lowercase. Nothing else.
     """
     
-    chain = PromptTemplate.from_template(prompt) | llm
-    response = chain.invoke({"query": state["query"]})
-    
+    response = llm.invoke(prompt)
     route = response.content.strip().lower()
     
-    # Fallback just in case the LLM hallucinates
-    if route not in ["support", "sales", "escalation"]:
-        route = "escalation"
+    if route not in ["support", "sales", "escalation", "general"]:
+        route = "general"
         
     logger.info(f"🧭 [Router Agent] Decision: Route to -> {route.upper()}")
     return {"route": route}
@@ -116,4 +123,35 @@ def escalation_node(state: AgentState) -> AgentState:
         "extracted_data": {"escalation_reason": "High risk / Angry customer"},
         "requires_approval": True, # THIS IS CRITICAL FOR PHASE 4
         "sources": ["Escalation Team"]
+    }
+
+
+def general_node(state: AgentState) -> AgentState:
+    """Handles greetings and general conversation with memory."""
+    logger.info("👋 [General Agent] Handling general query...")
+    
+    history = get_chat_history(state["session_id"])
+    
+    prompt = f"""
+        You are the professional, courteous AI Operations Assistant (acting with the professionalism of an HR representative).
+        
+        Recent Conversation History:
+        {history}
+        
+        Latest User Query: "{state['query']}"
+        
+        Tone & Behavior Guidelines:
+        - Be polite, concise, and highly professional.
+        - DO NOT use overly casual phrases (e.g., "hum of activity", "what have you been up to", "catching up").
+        - If the user asks for factual information about a person, employee, or company data, DO NOT guess. State that you are the greeting agent and ask them to specify their question so you can search the company records.
+        
+        Respond to the user's latest query following these guidelines.
+        """
+    response = llm.invoke(prompt)
+    
+    return {
+        "answer": response.content,
+        "extracted_data": {},
+        "requires_approval": False,
+        "sources": []
     }

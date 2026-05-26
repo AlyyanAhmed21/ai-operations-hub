@@ -8,6 +8,7 @@ from rag.retriever import ask_knowledge_base
 from agents.workflow import agent_app
 from utils.logger import logger
 from services.n8n_client import trigger_n8n_workflow
+from services.memory import save_message
 
 router = APIRouter()
 
@@ -53,13 +54,17 @@ async def upload_document(file: UploadFile = File(...)):
             os.remove(file_path)
         raise HTTPException(status_code=500, detail=f"Error processing file: {str(e)}")
 
+
 @router.post("/query", response_model=QueryResponse, tags=["AI Operations"])
 async def process_query(request: QueryRequest):
     """Send a query to the AI Operations Hub Multi-Agent System."""
     try:
         logger.info(f"🚀 Incoming Query: '{request.query}'")
         
-        # 1. Prepare the initial state for LangGraph
+        # 1. SAVE USER MESSAGE TO GLOBAL MEMORY
+        save_message(request.session_id, "user", request.query)
+        
+        # 2. Prepare the initial state for LangGraph
         initial_state = {
             "query": request.query,
             "session_id": request.session_id,
@@ -70,10 +75,13 @@ async def process_query(request: QueryRequest):
             "extracted_data": {}
         }
         
-        # 2. Run the Multi-Agent Workflow!
+        # 3. Run the Multi-Agent Workflow!
         final_state = agent_app.invoke(initial_state)
         
-                # Prepare the payload for n8n
+        # 4. SAVE AI ANSWER TO GLOBAL MEMORY
+        save_message(request.session_id, "assistant", final_state.get("answer", ""))
+        
+        # 5. Prepare the payload for n8n
         n8n_payload = {
             "session_id": request.session_id,
             "route_taken": final_state.get("route", "unknown"),
@@ -85,7 +93,7 @@ async def process_query(request: QueryRequest):
         # Trigger n8n in the background!
         await trigger_n8n_workflow(n8n_payload)
         
-        # 3. Return the final result to the user
+        # 6. Return the final result
         return QueryResponse(
             answer=final_state.get("answer", ""),
             sources=final_state.get("sources", []),

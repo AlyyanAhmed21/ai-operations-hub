@@ -39,7 +39,7 @@
       font-family: 'JetBrains Mono', monospace;
       min-height: 100vh;
       display: flex;
-      overflow: hidden;
+      overflow: auto;
     }
 
     /* ─── Scrollbar ─── */
@@ -242,7 +242,7 @@
       display: flex;
       flex-direction: column;
       min-height: 100vh;
-      overflow: hidden;
+      overflow: auto;
     }
 
     /* ─── VIEWS ─── */
@@ -626,6 +626,7 @@
       flex: 1;
       overflow-y: auto;
       padding: 32px;
+      padding-bottom: 180px;
       display: flex;
       flex-direction: column;
       gap: 24px;
@@ -759,7 +760,11 @@
       padding: 20px 32px;
       background: var(--bg);
       border-top: 1px solid var(--border);
-      position: relative;
+      position: fixed;
+      bottom: 0;
+      right: 0;
+      left: 240px;
+      z-index: 10;
     }
 
     .chat-glow {
@@ -1965,23 +1970,6 @@
     function appendMsg(role, content, route, requiresApproval, sources) {
       if (chatWelcome) chatWelcome.style.display = 'none';
 
-      let metaHTML = '';
-      if (role === 'ai' && (route || requiresApproval)) {
-        metaHTML = '<div class="msg-meta">';
-        if (route) metaHTML += `<span class="badge badge-muted" style="font-size:10px;">[ROUTE: ${escapeHtml(route)}]</span>`;
-        if (requiresApproval) metaHTML += `<span class="badge badge-danger" style="font-size:10px;">⚠ REQUIRES APPROVAL</span>`;
-        metaHTML += '</div>';
-      }
-
-      let srcHTML = '';
-      if (sources && sources.length) {
-        srcHTML = '<div class="sources-section"><div class="sources-label">Reference Sources</div>';
-        sources.forEach((s, i) => {
-          srcHTML += `<div class="source-item"><span class="source-num">[${i + 1}]</span><span>${escapeHtml(s)}</span></div>`;
-        });
-        srcHTML += '</div>';
-      }
-
       const row = document.createElement('div');
       row.className = 'msg-row fade-up ' + role;
 
@@ -1990,7 +1978,18 @@
       <div class="msg-bubble user">
         <div style="white-space:pre-wrap">${escapeHtml(content)}</div>
       </div>`;
+        chatHistory.appendChild(row);
+        chatHistory.scrollTop = chatHistory.scrollHeight;
       } else {
+        // AI message with streaming effect
+        let metaHTML = '';
+        if (route || requiresApproval) {
+          metaHTML = '<div class="msg-meta">';
+          if (route) metaHTML += `<span class="badge badge-muted" style="font-size:10px;">[ROUTE: ${escapeHtml(route)}]</span>`;
+          if (requiresApproval) metaHTML += `<span class="badge badge-danger" style="font-size:10px;">⚠ REQUIRES APPROVAL</span>`;
+          metaHTML += '</div>';
+        }
+
         row.innerHTML = `
       <div class="msg-bubble ai">
         <div class="ai-icon">
@@ -1998,14 +1997,48 @@
         </div>
         <div style="flex:1">
           ${metaHTML}
-          <div style="white-space:pre-wrap">${escapeHtml(content)}</div>
-          ${srcHTML}
+          <div id="stream-${Date.now()}" style="white-space:pre-wrap;min-height:1.3em;"></div>
         </div>
       </div>`;
-      }
 
-      chatHistory.appendChild(row);
-      chatHistory.scrollTop = chatHistory.scrollHeight;
+        chatHistory.appendChild(row);
+        chatHistory.scrollTop = chatHistory.scrollHeight;
+
+        // Streaming/typewriter effect
+        const streamContainer = row.querySelector('[id^="stream-"]');
+        let i = 0;
+        const typingSpeed = 5; // milliseconds per character - faster streaming
+
+        function typeWriter() {
+          if (i < content.length) {
+            let char = content.charAt(i);
+            if (char === '\n') {
+              streamContainer.appendChild(document.createElement('br'));
+            } else {
+              streamContainer.appendChild(document.createTextNode(char));
+            }
+            i++;
+            chatHistory.scrollTop = chatHistory.scrollHeight;
+            setTimeout(typeWriter, typingSpeed);
+          } else {
+            // Typing complete, add sources if they exist
+            if (sources && sources.length > 0) {
+              let srcHTML = '<div class="sources-section"><div class="sources-label">Reference Sources</div>';
+              sources.forEach((s, idx) => {
+                srcHTML += `<div class="source-item"><span class="source-num">[${idx + 1}]</span><span>${escapeHtml(s)}</span></div>`;
+              });
+              srcHTML += '</div>';
+              
+              const sourcesDiv = document.createElement('div');
+              sourcesDiv.innerHTML = srcHTML;
+              streamContainer.parentElement.appendChild(sourcesDiv);
+              chatHistory.scrollTop = chatHistory.scrollHeight;
+            }
+          }
+        }
+
+        typeWriter();
+      }
     }
 
     function setLoading(on) {
