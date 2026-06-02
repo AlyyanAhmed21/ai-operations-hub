@@ -1,0 +1,232 @@
+{
+  "name": "AI Ops Hub — Single Scenario",
+  "flow": [
+    {
+      "id": 1,
+      "module": "gateway:CustomWebHook",
+      "version": 1,
+      "parameters": {
+        "hook": 1,
+        "maxResults": 1
+      },
+      "mapper": {},
+      "metadata": {
+        "designer": { "x": 0, "y": 0 },
+        "restore": {
+          "parameters": {
+            "hook": { "label": "AI Ops Hub Unified Webhook" }
+          }
+        }
+      }
+    },
+    {
+      "id": 2,
+      "module": "builtin:BasicRouter",
+      "version": 1,
+      "mapper": null,
+      "metadata": {
+        "designer": { "x": 300, "y": 0 },
+        "designer_note": "Routes based on route_taken OR action field"
+      },
+      "routes": [
+
+        {
+          "flow": [
+            {
+              "id": 3,
+              "module": "google-sheets:addRow",
+              "version": 2,
+              "parameters": {
+                "spreadsheetId": "1USXaoaICuOanBnhHLkdsTVWggx6_JTeY64OhbYMcVwg",
+                "sheetId": "0",
+                "includesHeaders": true,
+                "valueInputOption": "USER_ENTERED"
+              },
+              "mapper": {
+                "values": {
+                  "Date": "{{now}}",
+                  "Lead Score": "{{1.body.extracted_data.lead_score}}",
+                  "Summary": "{{1.body.extracted_data.summary}}"
+                }
+              },
+              "filter": {
+                "name": "Sales Route",
+                "conditions": [
+                  [
+                    {
+                      "a": "{{1.body.route_taken}}",
+                      "b": "sales",
+                      "o": "text:equal"
+                    }
+                  ]
+                ]
+              },
+              "metadata": {
+                "designer": { "x": 600, "y": -250 }
+              }
+            },
+            {
+              "id": 4,
+              "module": "http:ActionSendData",
+              "version": 3,
+              "parameters": {},
+              "mapper": {
+                "url": "YOUR_DISCORD_WEBHOOK_URL_SALES",
+                "method": "POST",
+                "headers": [
+                  { "name": "Content-Type", "value": "application/json" }
+                ],
+                "bodyType": "raw",
+                "contentType": "application/json",
+                "body": "{\"content\": \"New Lead! Score: {{3.values.Lead Score}}/10. Summary: {{3.values.Summary}}\"}"
+              },
+              "metadata": {
+                "designer": { "x": 900, "y": -250 }
+              }
+            }
+          ]
+        },
+
+        {
+          "flow": [
+            {
+              "id": 5,
+              "module": "datastore:ActionInsertRecord",
+              "version": 1,
+              "parameters": {
+                "datastore": 1
+              },
+              "mapper": {
+                "key": "{{1.body.escalation_id}}",
+                "values": {
+                  "ai_answer": "{{1.body.ai_answer}}",
+                  "created_at": "{{now}}",
+                  "status": "pending"
+                }
+              },
+              "filter": {
+                "name": "Escalation Route",
+                "conditions": [
+                  [
+                    {
+                      "a": "{{1.body.route_taken}}",
+                      "b": "escalation",
+                      "o": "text:equal"
+                    }
+                  ]
+                ]
+              },
+              "metadata": {
+                "designer": { "x": 600, "y": 0 },
+                "designer_note": "Saves ai_answer to Data Store keyed by escalation_id"
+              }
+            },
+            {
+              "id": 6,
+              "module": "http:ActionSendData",
+              "version": 3,
+              "parameters": {},
+              "mapper": {
+                "url": "YOUR_DISCORD_WEBHOOK_URL_ESCALATION",
+                "method": "POST",
+                "headers": [
+                  { "name": "Content-Type", "value": "application/json" }
+                ],
+                "bodyType": "raw",
+                "contentType": "application/json",
+                "body": "{\"content\": \"🚨 ESCALATION ALERT! A customer is angry.\\nAI drafted this response: \\\"{{1.body.ai_answer}}\\\".\\n\\nClick to APPROVE and send email:\\nhttps://hook.eu1.make.com/YOUR_WEBHOOK_ID?action=approve&escalation_id={{1.body.escalation_id}}\"}"
+              },
+              "metadata": {
+                "designer": { "x": 900, "y": 0 },
+                "designer_note": "Discord posts approval link pointing BACK to this same webhook"
+              }
+            }
+          ]
+        },
+
+        {
+          "flow": [
+            {
+              "id": 7,
+              "module": "datastore:ActionGetRecord",
+              "version": 1,
+              "parameters": {
+                "datastore": 1
+              },
+              "mapper": {
+                "key": "{{1.query.escalation_id}}"
+              },
+              "filter": {
+                "name": "Approval Callback",
+                "conditions": [
+                  [
+                    {
+                      "a": "{{1.query.action}}",
+                      "b": "approve",
+                      "o": "text:equal"
+                    }
+                  ]
+                ]
+              },
+              "metadata": {
+                "designer": { "x": 600, "y": 250 },
+                "designer_note": "Retrieves the saved ai_answer using escalation_id from query param"
+              }
+            },
+            {
+              "id": 8,
+              "module": "gmail:ActionSendEmail",
+              "version": 1,
+              "parameters": {},
+              "mapper": {
+                "to": "alyyanawan19@gmail.com",
+                "subject": "Customer Support",
+                "content": "{{7.values.ai_answer}}",
+                "contentType": "text"
+              },
+              "metadata": {
+                "designer": { "x": 900, "y": 250 },
+                "designer_note": "Sends approved AI response email"
+              }
+            },
+            {
+              "id": 9,
+              "module": "datastore:ActionDeleteRecord",
+              "version": 1,
+              "parameters": {
+                "datastore": 1
+              },
+              "mapper": {
+                "key": "{{1.query.escalation_id}}"
+              },
+              "metadata": {
+                "designer": { "x": 1200, "y": 250 },
+                "designer_note": "Cleans up the Data Store record after email is sent"
+              }
+            }
+          ]
+        }
+
+      ]
+    }
+  ],
+  "metadata": {
+    "instant": true,
+    "version": 1,
+    "scenario": {
+      "roundtrips": 1,
+      "maxErrors": 3,
+      "autoCommit": true,
+      "autoCommitTriggerLast": true,
+      "sequential": false,
+      "confidential": false,
+      "dataloss": false,
+      "dlq": false,
+      "freshVariables": false
+    },
+    "designer": {
+      "orphans": []
+    },
+    "zone": "eu1.make.com"
+  }
+}

@@ -1,4 +1,4 @@
-# main.py
+# core/main.py
 import subprocess
 import sys
 import threading
@@ -9,7 +9,6 @@ import os
 # ANSI color codes for premium visual console output
 COLOR_FE = "\033[96m"   # Cyan
 COLOR_BE = "\033[92m"   # Green
-COLOR_N8N = "\033[95m"  # Magenta
 COLOR_SYS = "\033[93m"  # Yellow
 COLOR_RESET = "\033[0m"
 
@@ -30,6 +29,7 @@ def log_stream(stream, prefix, color_code):
 
 def start_processes():
     print(f"{COLOR_SYS}[SYSTEM] Starting AI Operations Hub Orchestrator...{COLOR_RESET}")
+    print(f"{COLOR_SYS}[SYSTEM] Note: Automation layer is cloud-hosted (Make.com).{COLOR_RESET}")
     
     # 1. Start Frontend (Node.js http server)
     try:
@@ -62,21 +62,6 @@ def start_processes():
         processes.append((be_proc, "BACKEND", COLOR_BE))
     except Exception as e:
         print(f"{COLOR_SYS}[SYSTEM] Failed to launch BACKEND: {e}{COLOR_RESET}")
-
-    # 3. Start n8n automations
-    try:
-        print(f"{COLOR_SYS}[SYSTEM] Launching n8n Automations (npx n8n)...{COLOR_RESET}")
-        n8n_proc = subprocess.Popen(
-            ["npx", "n8n"],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True,
-            bufsize=1,
-            shell=True
-        )
-        processes.append((n8n_proc, "N8N", COLOR_N8N))
-    except Exception as e:
-        print(f"{COLOR_SYS}[SYSTEM] Failed to launch N8N: {e}{COLOR_RESET}")
 
     # Start thread-safe logging readers for all stdout and stderr streams
     for proc, name, color in processes:

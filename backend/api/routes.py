@@ -2,6 +2,7 @@
 import os
 import shutil
 import zlib
+import uuid
 import datetime
 from fastapi import APIRouter, UploadFile, File, HTTPException
 from models.schemas import QueryRequest, QueryResponse, WebhookPayload
@@ -9,7 +10,7 @@ from rag.ingestion import process_uploaded_file
 from rag.retriever import ask_knowledge_base
 from agents.workflow import agent_app
 from utils.logger import logger
-from services.n8n_client import trigger_n8n_workflow
+from services.automation_client import trigger_automation_workflow
 from services.memory import save_message
 
 router = APIRouter()
@@ -132,17 +133,29 @@ async def process_query(request: QueryRequest):
         # 4. SAVE AI ANSWER TO GLOBAL MEMORY
         save_message(request.session_id, "assistant", final_state.get("answer", ""))
         
-        # 5. Prepare the payload for n8n
-        n8n_payload = {
+        # 5. Prepare the payload for Make.com
+        route_taken = final_state.get("route", "unknown")
+        
+        # Generate a unique Escalation ID if the route is escalation
+        escalation_id = None
+        if route_taken == "escalation":
+            # Creates an ID like: esc-20260531-a1b2
+            date_str = datetime.datetime.now().strftime("%Y%m%d")
+            unique_hash = uuid.uuid4().hex[:4]
+            escalation_id = f"esc-{date_str}-{unique_hash}"
+
+        # Prepare the payload for Make.com
+        automation_payload = {
             "session_id": request.session_id,
-            "route_taken": final_state.get("route", "unknown"),
+            "route_taken": route_taken,
             "requires_approval": final_state.get("requires_approval", False),
             "extracted_data": final_state.get("extracted_data", {}),
-            "ai_answer": final_state.get("answer", "")
+            "ai_answer": final_state.get("answer", ""),
+            "escalation_id": escalation_id
         }
         
-        # Trigger n8n in the background!
-        await trigger_n8n_workflow(n8n_payload)
+        # Trigger Make.com in the background!
+        await trigger_automation_workflow(automation_payload)
         
         # 6. Return the final result
         return QueryResponse(
