@@ -2,7 +2,6 @@
 import os
 from typing import Optional
 from langchain_groq import ChatGroq
-from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_chroma import Chroma
 from langchain_core.prompts import PromptTemplate
 from utils.logger import logger
