@@ -7,7 +7,11 @@ from langchain_chroma import Chroma
 from langchain_core.prompts import PromptTemplate
 from utils.logger import logger
 from services.memory import get_chat_history
+from langchain_community.embeddings import HuggingFaceInferenceAPIEmbeddings
 
+
+# ... later in the code ...
+    # Initialize Embeddings (Using Free Cloud API to save RAM)
 CHROMA_PATH = "./chroma_db"
 
 def ask_knowledge_base(query: str, session_id: str = "default", document_filter: Optional[str] = None):
@@ -17,7 +21,11 @@ def ask_knowledge_base(query: str, session_id: str = "default", document_filter:
     # 2. Retrieve past conversation history
     chat_history = get_chat_history(session_id)
     
-    embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+
+    embeddings = HuggingFaceInferenceAPIEmbeddings(
+        api_key=os.getenv("HF_TOKEN"),
+        model_name="sentence-transformers/all-MiniLM-L6-v2"
+    )
     
     if not os.path.exists(CHROMA_PATH):
         return {"answer": "The knowledge base is empty.", "sources": []}

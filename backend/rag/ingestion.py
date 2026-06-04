@@ -4,6 +4,7 @@ from langchain_community.document_loaders import PyPDFLoader, TextLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_chroma import Chroma
+from langchain_community.embeddings import HuggingFaceInferenceAPIEmbeddings
 
 # Define where our database will live
 CHROMA_PATH = "./chroma_db"
@@ -41,8 +42,11 @@ def process_uploaded_file(file_path: str, filename: str):
     for chunk in chunks:
         chunk.metadata["source"] = filename
 
-    # 4. Initialize Embeddings (Free, Local)
-    embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+    # Initialize Embeddings (Using Free Cloud API to save RAM)
+    embeddings = HuggingFaceInferenceAPIEmbeddings(
+        api_key=os.getenv("HF_TOKEN"),
+        model_name="sentence-transformers/all-MiniLM-L6-v2"
+    )
 
     # 5. Store in ChromaDB
     print("💾 Saving to ChromaDB...")
