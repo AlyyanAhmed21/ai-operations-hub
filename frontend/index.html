@@ -2075,7 +2075,7 @@
       chatHistory.scrollTop = chatHistory.scrollHeight;
 
       try {
-        const res = await fetch('http://127.0.0.1:8000/api/v1/query', {
+        const res = await fetch('https://ai-operations-hub.onrender.com/api/v1/query', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ query, session_id: SESSION_ID })
@@ -2127,7 +2127,7 @@
       const fd = new FormData();
       fd.append('file', file);
       try {
-        const r = await fetch('http://127.0.0.1:8000/api/v1/upload', { method: 'POST', body: fd });
+        const r = await fetch('https://ai-operations-hub.onrender.com/api/v1/upload', { method: 'POST', body: fd });
         if (!r.ok) throw new Error('Upload failed');
         showToast('success', '✓ Ingestion Complete');
         loadDocuments();
@@ -2174,7 +2174,7 @@
       const chatText = document.getElementById('chat-status-text');
 
       try {
-        const res = await fetch('http://127.0.0.1:8000/api/v1/health');
+        const res = await fetch('https://ai-operations-hub.onrender.com/api/v1/health');
         if (res.ok) {
           if (sidebarDot) {
             sidebarDot.style.background = 'var(--acid)';
@@ -2212,7 +2212,7 @@
       if (!tbody) return;
 
       try {
-        const res = await fetch('http://127.0.0.1:8000/api/v1/documents');
+        const res = await fetch('https://ai-operations-hub.onrender.com/api/v1/documents');
         if (!res.ok) throw new Error('Failed to fetch documents');
         const docs = await res.json();
 
@@ -2262,7 +2262,7 @@
       if (!activeCountEl || !gridEl) return;
 
       try {
-        const res = await fetch('http://127.0.0.1:8000/api/v1/system/status');
+        const res = await fetch('https://ai-operations-hub.onrender.com/api/v1/system/status');
         if (!res.ok) throw new Error('Failed to fetch system status');
         const data = await res.json();
 
