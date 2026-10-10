@@ -42,9 +42,10 @@ def process_uploaded_file(file_path: str, filename: str):
         chunk.metadata["source"] = filename
 
     # Initialize Embeddings (Using Free Cloud API to save RAM)
-    embeddings = HuggingFaceInferenceAPIEmbeddings(
-        api_key=os.getenv("HF_TOKEN"),
-        model_name="sentence-transformers/all-MiniLM-L6-v2"
+    embeddings = HuggingFaceEndpointEmbeddings(
+        model="sentence-transformers/all-MiniLM-L6-v2",
+        task="feature-extraction",
+        huggingfacehub_api_token=os.getenv("HF_TOKEN"),
     )
 
     # 5. Store in ChromaDB

@@ -21,9 +21,10 @@ def ask_knowledge_base(query: str, session_id: str = "default", document_filter:
     chat_history = get_chat_history(session_id)
     
 
-    embeddings = HuggingFaceInferenceAPIEmbeddings(
-        api_key=os.getenv("HF_TOKEN"),
-        model_name="sentence-transformers/all-MiniLM-L6-v2"
+    embeddings = HuggingFaceEndpointEmbeddings(
+        model="sentence-transformers/all-MiniLM-L6-v2",
+        task="feature-extraction",
+        huggingfacehub_api_token=os.getenv("HF_TOKEN"),
     )
     
     if not os.path.exists(CHROMA_PATH):
