@@ -11,7 +11,7 @@ load_dotenv()
 print("--- 1. Testing Groq LLM (Llama 3) ---")
 # Initialize the LLM
 llm = ChatGroq(
-    model="llama-3.1-8b-instant", # Fast, free, and highly capable
+    model="openai/gpt-oss-20b", # Fast, free, and highly capable
     temperature=0           # 0 means factual and deterministic (good for business)
 )
 
