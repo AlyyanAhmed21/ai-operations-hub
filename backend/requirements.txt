@@ -12,3 +12,5 @@ pydantic
 python-multipart
 pypdf
 httpx
+langchain-text-splitters
+langchain-huggingface

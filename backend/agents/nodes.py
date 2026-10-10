@@ -11,7 +11,7 @@ from services.memory import get_chat_history
 load_dotenv()
 
 # Initialize the LLM
-llm = ChatGroq(model="llama-3.1-8b-instant", temperature=0)
+llm = ChatGroq(model="openai/gpt-oss-20b", temperature=0)
 
 def router_node(state: AgentState) -> AgentState:
     """Analyzes the query and routes it to the correct agent."""

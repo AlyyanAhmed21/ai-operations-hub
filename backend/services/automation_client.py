@@ -1,10 +1,10 @@
 # backend/services/automation_client.py
+import os
 import httpx
 import asyncio
 from utils.logger import logger
 
-# PASTE YOUR MAKE.COM WEBHOOK URL HERE 👇
-MAKE_WEBHOOK_URL = "https://hook.eu2.make.com/2q6stlwwq8o44js5qotgogy4oyuvf22p"
+MAKE_WEBHOOK_URL = os.getenv("MAKE_WEBHOOK_URL")
 
 async def trigger_automation_workflow(payload: dict):
     """
